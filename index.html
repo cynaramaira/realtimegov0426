@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pesquisa Real Time Big Data – Governo de Pernambuco 2026 | Jamildo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f5f6fa;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 20px 12px 40px;
+  }
+  .wrap {
+    width: 500px;
+    max-width: 100%;
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.10);
+  }
+  .header {
+    background: #024796;
+    padding: 14px 18px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header img { height: 26px; object-fit: contain; }
+  .header-logo-fallback { font-weight: 900; font-size: 16px; color: #fff; letter-spacing: -1px; }
+  .header-logo-fallback span { color: #f83d03; }
+  .badge {
+    background: #f83d03; color: #fff;
+    font-size: 9px; font-weight: 700;
+    padding: 3px 9px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    white-space: nowrap;
+  }
+  .title-block {
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid #eef0f4;
+    text-align: center;
+  }
+  .title-block h1 { font-size: 15px; font-weight: 700; color: #024796; line-height: 1.35; }
+  .title-block p { font-size: 10px; color: #999; margin-top: 4px; }
+  .tabs { display: flex; border-bottom: 2px solid #eef0f4; }
+  .tab {
+    flex: 1; padding: 10px 4px;
+    font-size: 11px; font-weight: 600;
+    text-align: center; cursor: pointer;
+    background: #fff; color: #999;
+    border: none; border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .tab.active { color: #f83d03; border-bottom-color: #f83d03; }
+  .content { padding: 16px 18px 20px; }
+  .section-label {
+    font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: #f83d03; margin-bottom: 12px;
+  }
+  .candidate-row {
+    display: flex; align-items: center;
+    gap: 10px; margin-bottom: 13px;
+  }
+  .avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%; object-fit: cover;
+    border: 2px solid #eef0f4; flex-shrink: 0;
+    background: #e8edf5;
+  }
+  .cand-info { min-width: 88px; }
+  .cand-name { font-size: 11px; font-weight: 700; color: #1a1a2e; }
+  .cand-party { font-size: 9px; color: #aaa; margin-top: 1px; }
+  .bar-wrap { flex: 1; }
+  .bar-bg { background: #f0f2f7; border-radius: 6px; height: 20px; overflow: hidden; }
+  .bar-fill {
+    height: 100%; border-radius: 6px;
+    display: flex; align-items: center;
+    justify-content: flex-end; padding-right: 7px;
+    font-size: 10px; font-weight: 700; color: #fff;
+    transition: width 0.8s cubic-bezier(.4,0,.2,1);
+    white-space: nowrap;
+  }
+  .bar-pct { font-size: 14px; font-weight: 700; min-width: 38px; text-align: right; flex-shrink: 0; }
+  .winner-badge {
+    display: inline-block;
+    background: #e8f5e9; color: #1b5e20;
+    font-size: 8px; font-weight: 700;
+    border-radius: 8px; padding: 2px 6px;
+    margin-left: 4px; border: 1px solid #43a047;
+    vertical-align: middle;
+    animation: glow 2s infinite;
+  }
+  @keyframes glow { 0%,100%{opacity:1} 50%{opacity:0.6} }
+  .divider { border: none; border-top: 1px solid #eef0f4; margin: 12px 0; }
+  .others-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .other-card {
+    flex: 1; background: #f8f9fc;
+    border-radius: 10px; padding: 10px 8px;
+    text-align: center; border: 1px solid #eef0f4;
+  }
+  .other-card img {
+    width: 34px; height: 34px;
+    border-radius: 50%; object-fit: cover;
+    margin: 0 auto 5px; display: block;
+    border: 2px solid #eef0f4;
+  }
+  .oc-pct { font-size: 16px; font-weight: 700; color: #024796; }
+  .oc-name { font-size: 10px; font-weight: 700; color: #333; margin-top: 2px; }
+  .oc-party { font-size: 9px; color: #bbb; }
+  .misc-row { display: flex; gap: 6px; margin-top: 6px; }
+  .misc-pill {
+    flex: 1; background: #f0f2f7;
+    border-radius: 20px; font-size: 10px;
+    color: #777; padding: 5px 8px; text-align: center;
+  }
+  .misc-pill span { font-weight: 700; color: #444; }
+  .h2h {
+    background: #024796; border-radius: 12px;
+    padding: 14px; margin-top: 14px; color: #fff;
+  }
+  .h2h-title {
+    font-size: 9px; text-transform: uppercase;
+    letter-spacing: 1px; opacity: 0.75;
+    margin-bottom: 10px; text-align: center;
+  }
+  .h2h-bars { display: flex; border-radius: 6px; overflow: hidden; height: 30px; }
+  .h2h-side {
+    height: 100%; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff;
+    transition: width 0.8s;
+  }
+  .h2h-names { display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; opacity: 0.8; }
+  .info-box {
+    background: #fff8f5; border-left: 3px solid #f83d03;
+    border-radius: 0 8px 8px 0; padding: 9px 11px;
+    margin-top: 14px; font-size: 10px;
+    color: #5d4037; line-height: 1.6;
+  }
+  .info-box strong { color: #f83d03; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* rejeição */
+  .rej-row {
+    display: flex; align-items: center;
+    gap: 8px; margin-bottom: 10px;
+  }
+  .rej-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%; object-fit: cover;
+    border: 2px solid #eef0f4; flex-shrink: 0;
+    background: #e8edf5;
+  }
+  .rej-name { font-size: 11px; font-weight: 700; color: #1a1a2e; min-width: 80px; }
+  .rej-bar-bg { flex:1; background: #f0f2f7; border-radius: 6px; height: 16px; overflow: hidden; }
+  .rej-bar-fill {
+    height: 100%; border-radius: 6px;
+    display: flex; align-items: center;
+    justify-content: flex-end; padding-right: 6px;
+    font-size: 9px; font-weight: 700; color: #fff;
+    transition: width 0.8s cubic-bezier(.4,0,.2,1);
+  }
+  .rej-pct { font-size: 12px; font-weight: 700; min-width: 32px; text-align: right; flex-shrink: 0; }
+
+  /* aprovação */
+  .aprov-donut-wrap { position: relative; width: 100%; height: 190px; margin: 10px 0 6px; }
+  .aprov-legend { display: flex; gap: 12px; font-size: 11px; color: #888; flex-wrap: wrap; margin-bottom: 12px; }
+  .aprov-legend span { display: flex; align-items: center; gap: 5px; }
+  .leg-sq { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+  /* prioridades */
+  .prior-row {
+    display: flex; align-items: center;
+    gap: 8px; margin-bottom: 9px;
+  }
+  .prior-label { font-size: 11px; color: #444; min-width: 120px; }
+  .prior-bar-bg { flex:1; background: #f0f2f7; border-radius: 6px; height: 16px; overflow: hidden; }
+  .prior-bar-fill {
+    height: 100%; border-radius: 6px;
+    background: #024796;
+    transition: width 0.8s cubic-bezier(.4,0,.2,1);
+  }
+  .prior-pct { font-size: 11px; font-weight: 700; color: #024796; min-width: 30px; text-align: right; }
+
+  .chart-wrap { position: relative; width: 100%; height: 200px; margin: 10px 0 6px; }
+
+  .footer {
+    border-top: 1px solid #eef0f4;
+    padding: 10px 18px;
+    text-align: center;
+    font-size: 9px; color: #bbb; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <img src="https://jamildo.com/media/uploads/brancologojamildo_6xe6mA0.png"
+         alt="Jamildo"
+         onerror="this.style.display='none';document.getElementById('logo-fb').style.display='block'">
+    <span id="logo-fb" class="header-logo-fallback" style="display:none">jamildo<span>.</span>com</span>
+    <span class="badge">Real Time Big Data • 8 abr/2026</span>
+  </div>
+
+  <div class="title-block">
+    <h1>Disputa pelo Governo de Pernambuco 2026</h1>
+    <p>Real Time Big Data &bull; 1.600 entrevistados &bull; 6&ndash;7 abr. &bull; Margem: &plusmn;2,5 p.p.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('estimulado',this)">Estimulado</button>
+    <button class="tab" onclick="switchTab('espontaneo',this)">Espontâneo</button>
+    <button class="tab" onclick="switchTab('rejeicao',this)">Rejeição</button>
+    <button class="tab" onclick="switchTab('aprovacao',this)">Aprovação</button>
+  </div>
+
+  <!-- TAB: ESTIMULADO -->
+  <div id="tab-estimulado" class="tab-content active">
+    <div class="content">
+      <div class="section-label">Cenário estimulado — Abril 2026</div>
+
+      <div class="candidate-row">
+        <img class="avatar" src="joao-campos.jpg" alt="João Campos">
+        <div class="cand-info">
+          <div class="cand-name">João Campos <span class="winner-badge">1.º turno</span></div>
+          <div class="cand-party">PSB &bull; Ex-Prefeito do Recife</div>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar-bg">
+            <div class="bar-fill" id="bar-joao" style="width:0%;background:#e53935">50%</div>
+          </div>
+        </div>
+        <div class="bar-pct" style="color:#e53935">50%</div>
+      </div>
+
+      <div class="candidate-row">
+        <img class="avatar" src="raquel-lyra.webp" alt="Raquel Lyra">
+        <div class="cand-info">
+          <div class="cand-name">Raquel Lyra</div>
+          <div class="cand-party">PSD &bull; Governadora</div>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar-bg">
+            <div class="bar-fill" id="bar-raquel" style="width:0%;background:#024796">33%</div>
+          </div>
+        </div>
+        <div class="bar-pct" style="color:#024796">33%</div>
+      </div>
+
+      <hr class="divider">
+      <div class="section-label" style="margin-bottom:10px">Outros candidatos</div>
+      <div class="others-row">
+        <div class="other-card">
+          <img src="eduardo-moura.jpeg" alt="Eduardo Moura">
+          <div class="oc-pct">8%</div>
+          <div class="oc-name">Eduardo Moura</div>
+          <div class="oc-party">Novo &bull; Vereador</div>
+        </div>
+        <div class="other-card">
+          <img src="ivan-moraes.jpeg" alt="Ivan Moraes">
+          <div class="oc-pct">2%</div>
+          <div class="oc-name">Ivan Moraes</div>
+          <div class="oc-party">PSOL &bull; Ex-vereador</div>
+        </div>
+        <div class="other-card">
+          <div style="width:34px;height:34px;border-radius:50%;background:#eef0f4;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#aaa">?</div>
+          <div class="oc-pct">7%</div>
+          <div class="oc-name">NS/NR/Brancos</div>
+        </div>
+      </div>
+
+      <div class="h2h">
+        <div class="h2h-title">2.º turno direto — Campos vs. Lyra</div>
+        <div class="h2h-bars">
+          <div class="h2h-side" style="width:56.5%;background:#c62828">52%</div>
+          <div class="h2h-side" style="width:43.5%;background:#1565c0">40%</div>
+        </div>
+        <div class="h2h-names">
+          <span>João Campos 52%</span>
+          <span>Raquel Lyra 40%</span>
+        </div>
+      </div>
+
+      <div class="info-box" style="margin-top:12px">
+        <strong>João Campos lidera em todas as faixas etárias e de sexo.</strong>
+        Raquel Lyra só vence entre eleitores com renda acima de 5 salários mínimos.
+        1.600 entrevistados &bull; 6–7 abr/2026.
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: ESPONTÂNEO -->
+  <div id="tab-espontaneo" class="tab-content">
+    <div class="content">
+      <div class="section-label">Cenário espontâneo — Abril 2026</div>
+      <p style="font-size:10px;color:#aaa;margin-bottom:14px">O eleitor cita o candidato sem auxílio de lista</p>
+
+      <div class="candidate-row">
+        <img class="avatar" src="joao-campos.jpg" alt="João Campos">
+        <div class="cand-info">
+          <div class="cand-name">João Campos</div>
+          <div class="cand-party">PSB</div>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar-bg">
+            <div class="bar-fill" id="esb-joao" style="width:0%;background:#e53935">21%</div>
+          </div>
+        </div>
+        <div class="bar-pct" style="color:#e53935">21%</div>
+      </div>
+
+      <div class="candidate-row">
+        <img class="avatar" src="raquel-lyra.webp" alt="Raquel Lyra">
+        <div class="cand-info">
+          <div class="cand-name">Raquel Lyra</div>
+          <div class="cand-party">PSD</div>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar-bg">
+            <div class="bar-fill" id="esb-raquel" style="width:0%;background:#024796">18%</div>
+          </div>
+        </div>
+        <div class="bar-pct" style="color:#024796">18%</div>
+      </div>
+
+      <div class="others-row" style="margin-top:10px">
+        <div class="other-card">
+          <img src="eduardo-moura.jpeg" alt="Eduardo Moura">
+          <div class="oc-pct" style="font-size:14px">—</div>
+          <div class="oc-name">Eduardo Moura</div>
+          <div class="oc-party">Não divulgado</div>
+        </div>
+        <div class="other-card">
+          <img src="ivan-moraes.jpeg" alt="Ivan Moraes">
+          <div class="oc-pct" style="font-size:14px">—</div>
+          <div class="oc-name">Ivan Moraes</div>
+          <div class="oc-party">Não divulgado</div>
+        </div>
+        <div class="other-card">
+          <div style="width:34px;height:34px;border-radius:50%;background:#fff3e0;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#f83d03;font-weight:700">!</div>
+          <div class="oc-pct" style="font-size:16px;color:#f83d03">48%</div>
+          <div class="oc-name">Não sabe</div>
+          <div class="oc-party">NS/NR</div>
+        </div>
+      </div>
+
+      <div class="info-box" style="margin-top:14px">
+        <strong>48% dos eleitores</strong> não sabem em quem votariam no espontâneo —
+        sinal de que a disputa ainda está muito aberta para consolidação de voto.
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: REJEIÇÃO -->
+  <div id="tab-rejeicao" class="tab-content">
+    <div class="content">
+      <div class="section-label">Rejeição múltipla — Abril 2026</div>
+      <p style="font-size:10px;color:#aaa;margin-bottom:14px">Percentual que declara não votar de jeito nenhum no candidato</p>
+
+      <div class="rej-row">
+        <img class="rej-avatar" src="raquel-lyra.webp" alt="Raquel Lyra">
+        <div class="rej-name">Raquel Lyra</div>
+        <div class="rej-bar-bg">
+          <div class="rej-bar-fill" id="rej-raquel" style="width:0%;background:#f83d03">39%</div>
+        </div>
+        <div class="rej-pct" style="color:#f83d03">39%</div>
+      </div>
+
+      <div class="rej-row">
+        <img class="rej-avatar" src="ivan-moraes.jpeg" alt="Ivan Moraes">
+        <div class="rej-name">Ivan Moraes</div>
+        <div class="rej-bar-bg">
+          <div class="rej-bar-fill" id="rej-ivan" style="width:0%;background:#888">33%</div>
+        </div>
+        <div class="rej-pct" style="color:#888">33%</div>
+      </div>
+
+      <div class="rej-row">
+        <img class="rej-avatar" src="joao-campos.jpg" alt="João Campos">
+        <div class="rej-name">João Campos</div>
+        <div class="rej-bar-bg">
+          <div class="rej-bar-fill" id="rej-joao" style="width:0%;background:#e53935">30%</div>
+        </div>
+        <div class="rej-pct" style="color:#e53935">30%</div>
+      </div>
+
+      <div class="rej-row">
+        <img class="rej-avatar" src="eduardo-moura.jpeg" alt="Eduardo Moura">
+        <div class="rej-name">Eduardo Moura</div>
+        <div class="rej-bar-bg">
+          <div class="rej-bar-fill" id="rej-edu" style="width:0%;background:#bbb">25%</div>
+        </div>
+        <div class="rej-pct" style="color:#bbb">25%</div>
+      </div>
+
+      <hr class="divider">
+      <div class="section-label" style="margin-bottom:8px">Desconhecimento dos candidatos</div>
+      <div class="others-row">
+        <div class="other-card">
+          <img src="ivan-moraes.jpeg" alt="Ivan Moraes">
+          <div class="oc-pct" style="font-size:18px;color:#888">54%</div>
+          <div class="oc-name">Não conhecem</div>
+          <div class="oc-party">Ivan Moraes</div>
+        </div>
+        <div class="other-card">
+          <img src="eduardo-moura.jpeg" alt="Eduardo Moura">
+          <div class="oc-pct" style="font-size:18px;color:#888">49%</div>
+          <div class="oc-name">Não conhecem</div>
+          <div class="oc-party">Eduardo Moura</div>
+        </div>
+      </div>
+
+      <div class="info-box" style="margin-top:12px">
+        <strong>Raquel Lyra lidera a rejeição</strong> com 39%, apesar de ter a maior taxa de conhecimento entre os candidatos. Ivan Moraes e Eduardo Moura ainda são desconhecidos por mais da metade do eleitorado.
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: APROVAÇÃO -->
+  <div id="tab-aprovacao" class="tab-content">
+    <div class="content">
+      <div class="section-label">Aprovação do governo Raquel Lyra</div>
+
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <div style="flex:1;background:#e8f5e9;border-radius:10px;padding:12px;text-align:center;border:1px solid #c8e6c9">
+          <div style="font-size:26px;font-weight:700;color:#2e7d32">51%</div>
+          <div style="font-size:10px;color:#4caf50;font-weight:600;margin-top:2px">Aprovam</div>
+        </div>
+        <div style="flex:1;background:#ffebee;border-radius:10px;padding:12px;text-align:center;border:1px solid #ffcdd2">
+          <div style="font-size:26px;font-weight:700;color:#c62828">45%</div>
+          <div style="font-size:10px;color:#e53935;font-weight:600;margin-top:2px">Não aprovam</div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-bottom:10px">Avaliação detalhada</div>
+
+      <div class="aprov-legend">
+        <span><span class="leg-sq" style="background:#43a047"></span>Ótimo/Bom 29%</span>
+        <span><span class="leg-sq" style="background:#f9a825"></span>Regular 46%</span>
+        <span><span class="leg-sq" style="background:#e53935"></span>Ruim/Péssimo 22%</span>
+        <span><span class="leg-sq" style="background:#bdbdbd"></span>NS/NR 3%</span>
+      </div>
+
+      <div class="aprov-donut-wrap">
+        <canvas id="aprovChart" role="img"
+          aria-label="Gráfico de rosca: Ótimo/Bom 29%, Regular 46%, Ruim/Péssimo 22%, NS/NR 3%">
+          Ótimo/Bom: 29%, Regular: 46%, Ruim/Péssimo: 22%, NS/NR: 3%.
+        </canvas>
+      </div>
+
+      <hr class="divider">
+      <div class="section-label" style="margin-bottom:10px">Áreas prioritárias para o próximo governo</div>
+
+      <div class="prior-row">
+        <div class="prior-label">Segurança pública</div>
+        <div class="prior-bar-bg">
+          <div class="prior-bar-fill" id="prior-seg" style="width:0%"></div>
+        </div>
+        <div class="prior-pct">24%</div>
+      </div>
+      <div class="prior-row">
+        <div class="prior-label">Saúde</div>
+        <div class="prior-bar-bg">
+          <div class="prior-bar-fill" id="prior-sau" style="width:0%"></div>
+        </div>
+        <div class="prior-pct">20%</div>
+      </div>
+
+      <div class="info-box" style="margin-top:14px">
+        Apesar de maioria aprovando o governo, a <strong>avaliação "regular"</strong> predomina (46%), e 22% classificam a gestão como ruim ou péssima — terreno de vulnerabilidade eleitoral para Raquel Lyra.
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Fonte: Real Time Big Data &bull; 1.600 entrevistados &bull; 6&ndash;7 abr/2026 &bull; Margem: &plusmn;2,5 p.p.
+  </div>
+</div>
+
+<script>
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'espontaneo') animEsp();
+  if (id === 'rejeicao') animRej();
+  if (id === 'aprovacao' && !window._aprovBuilt) buildAprov();
+}
+
+function animBar(id, pct, max) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  setTimeout(function() { el.style.width = (pct / max * 100).toFixed(1) + '%'; }, 80);
+}
+
+window.addEventListener('load', function() {
+  animBar('bar-joao', 50, 60);
+  animBar('bar-raquel', 33, 60);
+});
+
+function animEsp() {
+  animBar('esb-joao', 21, 30);
+  animBar('esb-raquel', 18, 30);
+}
+
+function animRej() {
+  animBar('rej-raquel', 39, 45);
+  animBar('rej-ivan', 33, 45);
+  animBar('rej-joao', 30, 45);
+  animBar('rej-edu', 25, 45);
+}
+
+function buildAprov() {
+  window._aprovBuilt = true;
+  var ctx = document.getElementById('aprovChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Ótimo/Bom', 'Regular', 'Ruim/Péssimo', 'NS/NR'],
+      datasets: [{
+        data: [29, 46, 22, 3],
+        backgroundColor: ['#43a047', '#f9a825', '#e53935', '#bdbdbd'],
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) { return ctx.label + ': ' + ctx.parsed + '%'; }
+          }
+        }
+      }
+    }
+  });
+
+  setTimeout(function() {
+    animBar('prior-seg', 24, 30);
+    animBar('prior-sau', 20, 30);
+  }, 200);
+}
+</script>
+</body>
+</html>
